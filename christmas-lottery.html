@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>圣诞节礼物抽奖</title>
+    <style>
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: linear-gradient(to bottom, #1a2a6c, #b21f1f, #fdbb2d);
+            font-family: 'Arial', sans-serif;
+            overflow: hidden;
+        }
+
+        .container {
+            text-align: center;
+            padding: 20px;
+            position: relative;
+        }
+
+        h1 {
+            color: #fff;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            font-size: 2.5em;
+            margin-bottom: 30px;
+        }
+
+        .gift-box {
+            width: 200px;
+            height: 200px;
+            background: #ff4d4d;
+            border-radius: 10px;
+            margin: 20px auto;
+            position: relative;
+            cursor: pointer;
+            transition: transform 0.3s;
+            box-shadow: 0 0 20px rgba(0,0,0,0.3);
+        }
+
+        .gift-box:hover {
+            transform: scale(1.05);
+        }
+
+        .gift-box::before {
+            content: '';
+            position: absolute;
+            width: 40px;
+            height: 200px;
+            background: #fff;
+            left: 80px;
+            top: 0;
+        }
+
+        .gift-box::after {
+            content: '';
+            position: absolute;
+            width: 200px;
+            height: 40px;
+            background: #fff;
+            left: 0;
+            top: 80px;
+        }
+
+        #result {
+            font-size: 1.5em;
+            color: #fff;
+            margin-top: 20px;
+            padding: 10px;
+            border-radius: 5px;
+            min-height: 50px;
+        }
+
+        button {
+            background: #4CAF50;
+            border: none;
+            color: white;
+            padding: 15px 32px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 4px 2px;
+            cursor: pointer;
+            border-radius: 25px;
+            transition: all 0.3s;
+        }
+
+        button:hover {
+            background: #45a049;
+            transform: scale(1.05);
+        }
+
+        .snow {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            background: white;
+            border-radius: 50%;
+            pointer-events: none;
+        }
+
+        @keyframes rotate {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .rotating {
+            animation: rotate 1s linear infinite;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎄 圣诞节礼物抽奖 🎄</h1>
+        <div class="gift-box" id="giftBox"></div>
+        <button onclick="startLottery()">开始抽奖</button>
+        <div id="result"></div>
+    </div>
+
+    <script>
+        // 礼物列表 - 可以根据需要修改
+        const gifts = [
+            "香水",
+            "项链",
+            "手表",
+            "包包",
+            "口红",
+            "护肤套装",
+            "耳环",
+            "围巾",
+            "手链",
+            "化妆品套装"
+        ];
+
+        let isRotating = false;
+
+        function createSnow() {
+            const snow = document.createElement('div');
+            snow.className = 'snow';
+            snow.style.left = Math.random() * window.innerWidth + 'px';
+            snow.style.animationDuration = Math.random() * 3 + 2 + 's';
+            snow.style.opacity = Math.random();
+            snow.style.transform = `scale(${Math.random()})`;
+            
+            document.body.appendChild(snow);
+
+            let position = -10;
+            const interval = setInterval(() => {
+                position += 1;
+                snow.style.top = position + 'px';
+
+                if(position > window.innerHeight) {
+                    clearInterval(interval);
+                    snow.remove();
+                }
+            }, 10);
+        }
+
+        // 每100ms创建一个雪花
+        setInterval(createSnow, 100);
+
+        function startLottery() {
+            if (isRotating) return;
+            
+            const giftBox = document.getElementById('giftBox');
+            const result = document.getElementById('result');
+            
+            isRotating = true;
+            giftBox.classList.add('rotating');
+            result.textContent = '抽奖中...';
+
+            // 随机抽取时间（2-4秒）
+            const duration = 2000 + Math.random() * 2000;
+
+            setTimeout(() => {
+                const randomIndex = Math.floor(Math.random() * gifts.length);
+                const selectedGift = gifts[randomIndex];
+                
+                giftBox.classList.remove('rotating');
+                result.textContent = `恭喜！你抽中了：${selectedGift} 🎁`;
+                isRotating = false;
+
+                // 添加礼花效果
+                createFireworks();
+            }, duration);
+        }
+
+        function createFireworks() {
+            for(let i = 0; i < 50; i++) {
+                const firework = document.createElement('div');
+                firework.className = 'snow'; // 复用雪花的样式
+                firework.style.left = '50%';
+                firework.style.top = '50%';
+                firework.style.background = `hsl(${Math.random() * 360}, 100%, 50%)`;
+                
+                const angle = Math.random() * Math.PI * 2;
+                const velocity = 5 + Math.random() * 5;
+                const vx = Math.cos(angle) * velocity;
+                const vy = Math.sin(angle) * velocity;
+                
+                document.body.appendChild(firework);
+
+                let x = window.innerWidth / 2;
+                let y = window.innerHeight / 2;
+                let opacity = 1;
+
+                const interval = setInterval(() => {
+                    x += vx;
+                    y += vy;
+                    opacity -= 0.02;
+                    
+                    firework.style.left = x + 'px';
+                    firework.style.top = y + 'px';
+                    firework.style.opacity = opacity;
+
+                    if(opacity <= 0) {
+                        clearInterval(interval);
+                        firework.remove();
+                    }
+                }, 20);
+            }
+        }
+    </script>
+</body>
+</html> 

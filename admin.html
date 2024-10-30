@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>抽奖转盘管理后台</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f0f0f0;
+        }
+
+        .prize-form {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        .prize-list {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        input[type="text"],
+        input[type="number"] {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        button {
+            background: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #45a049;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th, td {
+            padding: 10px;
+            border: 1px solid #ddd;
+            text-align: left;
+        }
+
+        th {
+            background: #f5f5f5;
+        }
+
+        .preview-image {
+            max-width: 100px;
+            max-height: 100px;
+        }
+
+        .error {
+            color: red;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>抽奖转盘管理后台</h1>
+    
+    <div class="prize-form">
+        <h2>添加/编辑奖品</h2>
+        <form id="prizeForm">
+            <div class="form-group">
+                <label for="name">奖品名称:</label>
+                <input type="text" id="name" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="probability">中奖概率 (%):</label>
+                <input type="number" id="probability" min="0" max="100" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="image">奖品图片:</label>
+                <input type="file" id="image" accept="image/*">
+            </div>
+            
+            <button type="submit">保存奖品</button>
+        </form>
+        <div id="totalProbability"></div>
+    </div>
+
+    <div class="prize-form">
+        <h2>预设中奖奖品</h2>
+        <div class="form-group">
+            <label for="presetPrize">选择预设中奖奖品:</label>
+            <select id="presetPrize" style="width: 100%; padding: 8px;">
+                <option value="">随机抽奖</option>
+            </select>
+        </div>
+        <button onclick="setPresetPrize()">设置预设奖品</button>
+    </div>
+
+    <div class="prize-list">
+        <h2>当前奖品列表</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>奖品名称</th>
+                    <th>概率</th>
+                    <th>图片</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody id="prizeTableBody"></tbody>
+        </table>
+    </div>
+
+    <div class="prize-form">
+        <h2>系统设置</h2>
+        <button onclick="resetLottery()" style="background-color: #ff4444;">重置抽奖状态</button>
+        <p style="margin-top: 10px; color: #666;">点击此按钮将允许用户重新抽奖</p>
+    </div>
+
+    <script>
+        let prizes = [];
+
+        function loadPrizes() {
+            const storedPrizes = localStorage.getItem('prizes');
+            if (storedPrizes) {
+                prizes = JSON.parse(storedPrizes);
+            }
+            updatePrizeTable();
+            updateTotalProbability();
+        }
+
+        function updateTotalProbability() {
+            const total = prizes.reduce((sum, prize) => sum + prize.probability, 0);
+            const element = document.getElementById('totalProbability');
+            element.textContent = `当前总概率: ${total}%`;
+            element.style.color = total === 100 ? 'green' : 'red';
+        }
+
+        function updatePrizeTable() {
+            const tbody = document.getElementById('prizeTableBody');
+            const presetSelect = document.getElementById('presetPrize');
+            tbody.innerHTML = '';
+            presetSelect.innerHTML = '<option value="">随机抽奖</option>';
+            
+            prizes.forEach((prize, index) => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${prize.name}</td>
+                    <td>${prize.probability}%</td>
+                    <td><img src="${prize.image}" class="preview-image" onerror="this.src='default.png'"></td>
+                    <td>
+                        <button onclick="deletePrize(${index})">删除</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+
+                const option = document.createElement('option');
+                option.value = prize.name;
+                option.textContent = prize.name;
+                presetSelect.appendChild(option);
+            });
+        }
+
+        function deletePrize(index) {
+            prizes.splice(index, 1);
+            localStorage.setItem('prizes', JSON.stringify(prizes));
+            updatePrizeTable();
+            updateTotalProbability();
+        }
+
+        function setPresetPrize() {
+            const selectedPrize = document.getElementById('presetPrize').value;
+            localStorage.setItem('presetPrize', selectedPrize);
+            alert(selectedPrize ? `已设置预设奖品: ${selectedPrize}` : '已设置为随机抽奖');
+        }
+
+        function resetLottery() {
+            localStorage.removeItem('hasDrawn');
+            localStorage.removeItem('drawnPrize');
+            alert('抽奖状态已重置，用户可以重新抽奖了！');
+        }
+
+        document.getElementById('prizeForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const name = document.getElementById('name').value;
+            const probability = parseFloat(document.getElementById('probability').value);
+            const imageFile = document.getElementById('image').files[0];
+            
+            let imageData = 'default.png';
+            if (imageFile) {
+                imageData = await new Promise((resolve) => {
+                    const reader = new FileReader();
+                    reader.onloadend = () => resolve(reader.result);
+                    reader.readAsDataURL(imageFile);
+                });
+            }
+
+            prizes.push({
+                name,
+                probability,
+                image: imageData
+            });
+            
+            localStorage.setItem('prizes', JSON.stringify(prizes));
+            this.reset();
+            loadPrizes();
+        });
+
+        loadPrizes();
+    </script>
+</body>
+</html> 
